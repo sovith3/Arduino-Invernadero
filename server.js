@@ -5,6 +5,15 @@ const io = require("socket.io")(httpServer, {cors: {
 
 httpServer.listen(3000);
 
+//TUNEL 
+
+const localtunnel = require('localtunnel');
+
+const tunnel = localtunnel(3000, { subdomain: 'dgnnkjhzlc'}, (err, tunnel) => {
+  console.log(err)
+});
+
+
 //PORT COM TEMPERATURA ARDUINO NANO
 const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
