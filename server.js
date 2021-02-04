@@ -1,9 +1,9 @@
-//SERVER
-const cors = require('cors');
-const app = require('express')();
-app.use(cors());
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
+const httpServer = require("http").createServer();
+const io = require("socket.io")(httpServer, {cors: {
+  origin: "*",credentials: false}
+});
+
+httpServer.listen(3000);
 
 //PORT COM TEMPERATURA ARDUINO NANO
 const SerialPort = require('serialport');
@@ -24,6 +24,7 @@ board.on("ready", function() {
   let luz = new five.Led(12);
   let tempRiego = 47;
   hidro.off();
+  luz.off();
 
   //SOCKET COMUNICACION servidor/cliente
   io.on('connection', socket => {
@@ -31,12 +32,12 @@ board.on("ready", function() {
 
     //Activar/Desactivar "Riego Automatico"
     socket.on('regadoAutomatico', function(data) {
-      if(data.estado === 'on'){
+      if(data.estado === 'off'){
         regadoAut = true;
         io.sockets.emit('regado',{estado:'Riego Manual Desactivao'});
         hidro.on()
         regado = false;
-      }else if(data.estado === 'off'){
+      }else if(data.estado === 'on'){
         regadoAut = false; 
         hidro.off();
         io.sockets.emit('regado',{estado:'Riego Manual Activado'});
@@ -64,13 +65,7 @@ board.on("ready", function() {
     });
   });
 
-  //PUERTO DEL SERVIDOR
-  server.listen(3000);
-  app.get('/', (req, res) => {
-    //PAGINA DE PRUEBA
-    res.sendFile(__dirname + '/index.html');
-  });
-
+ 
 //PUERTO SENSOR
   port.on("open", () => {
     //LOG
@@ -95,12 +90,10 @@ board.on("ready", function() {
           setTimeout(() => { hidro.off()}, 2000);
           regado = true;
           //Establecer tiempo de regado automatico (Evitar Bucle Infinito mientras no suba de golpe la humedad)
-          setTimeout(() => {regado=false}, 10000);
-          //EMITIR ESTADO RIEGO
-          io.sockets.emit('regado',{estado:'Regado automático, Actualizacion cada 20 minutos'});
+          setTimeout(() => {regado=false}, 1200000);
+          //EMITIR ESTADO RIEGO NO es necesario
+          //io.sockets.emit('regado',{estado:'Regado automático, Actualizacion cada 20 minutos'});
         }
-      }else{
-          io.sockets.emit('regado',{estado:'Aún no se cumplen los 20 minutos'});
       }
   }
   });
